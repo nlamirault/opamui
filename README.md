@@ -2,13 +2,16 @@
 
 A Terminal User Interface (TUI) for browsing and searching OCaml OPAM packages.
 
+![opamui screenshot](assets/main-view.png)
+
 ## Features
 
-- **Browse Packages**: View all available OPAM packages in your repository
-- **Search**: Type to filter packages by name in real-time
-- **Installed Status**: Quickly see which packages are already installed (marked with ✓)
-- **Navigation**: Use arrow keys to navigate through the package list
-- **Scrolling**: Automatic scrolling for large package lists
+- 🖥️ **Browse Packages**: Terminal-based UI to view all available OPAM packages in your repository
+- 🔍 **Search**: Type to filter packages by name in real-time
+- ✅ **Installed Status**: Quickly see which packages are already installed (marked with ✓)
+- 🧭 **Navigation**: Use arrow keys to navigate through the package list
+- 📜 **Scrolling**: Automatic scrolling for large package lists
+- 📋 **Package Details**: Press Enter to view detailed information about any package
 
 ### Prerequisites
 
@@ -18,19 +21,20 @@ A Terminal User Interface (TUI) for browsing and searching OCaml OPAM packages.
 
 ### Key Bindings
 
-| Key                  | Action                            |
-| -------------------- | --------------------------------- |
-| `↑` / `↓`            | Navigate up/down through packages |
-| `Type`               | Search/filter packages by name    |
-| `Backspace`          | Delete last character in search   |
-| `Esc`                | Clear search and reset            |
-| `q` / `Q` / `Ctrl+C` | Quit the application              |
+| Key                  | Action                                  |
+| -------------------- | --------------------------------------- |
+| `↑` / `↓`            | Navigate up/down through packages       |
+| `Enter`              | View package details / Return to list   |
+| `Type`               | Search/filter packages by name          |
+| `Backspace`          | Delete last character OR return to list |
+| `Esc`                | Clear search OR return to list          |
+| `q` / `Q` / `Ctrl+C` | Quit the application                    |
 
 ## Future Enhancements
 
 Potential features to add:
 
-- [ ] Package details view (press Enter on a package)
+- [x] Package details view (press Enter on a package) ✨
 - [ ] Install/remove packages directly from TUI
 - [ ] Multiple column layout
 - [ ] Sort options (name, installed, version)
