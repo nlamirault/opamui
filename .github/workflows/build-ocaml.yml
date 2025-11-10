@@ -24,7 +24,9 @@ jobs:
           - macos-latest
           - windows-latest
 
-    runs-on: OS ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    name: OS ${{ matrix.os }}
 
     steps:
     - name: 🚚 Checkout
