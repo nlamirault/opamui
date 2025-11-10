@@ -1,0 +1,3 @@
+(library
+ (name opamui)
+ (libraries lwt lwt.unix minttea leaves spices))
