@@ -45,6 +45,7 @@ repos:
     name: "📝 OCaml / Formatting"
     entry: dune fmt --auto
     language: system
+    files: \.(ml|mli|mll|mly)$
     pass_filenames: false
     stages: [pre-commit]
 # CI/CD
