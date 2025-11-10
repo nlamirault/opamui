@@ -93,17 +93,24 @@ let render_package ~selected ~width pkg =
   let version = truncate pkg.version version_width in
   let synopsis = truncate pkg.synopsis synopsis_width in
 
-  let line = Printf.sprintf "[%s] %-40s %-15s %s" status_icon name version synopsis in
+  if selected then
+    (* When selected: green background with black text, bold *)
+    let attr = A.(bg green ++ fg black ++ st bold) in
+    let line = Printf.sprintf "[%s] %-40s %-15s %s" status_icon name version synopsis in
+    I.string attr line
+  else
+    (* Not selected: use custom colors for each part *)
+    let status_attr = if pkg.installed then A.(fg green) else A.(fg (gray 8)) in
+    let name_attr = A.(fg blue ++ st bold) in
+    let version_attr = A.fg A.white in
+    let synopsis_attr = A.fg A.white in
 
-  let attr =
-    if selected then
-      A.(bg green ++ fg black ++ st bold)
-    else if pkg.installed then
-      A.(fg cyan ++ st bold)
-    else
-      A.empty
-  in
-  I.string attr line
+    let status_img = I.string status_attr (Printf.sprintf "[%s] " status_icon) in
+    let name_img = I.string name_attr (Printf.sprintf "%-40s " name) in
+    let version_img = I.string version_attr (Printf.sprintf "%-15s " version) in
+    let synopsis_img = I.string synopsis_attr synopsis in
+
+    I.hcat [status_img; name_img; version_img; synopsis_img]
 
 (* Render package details view *)
 let render_details model =
