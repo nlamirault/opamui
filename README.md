@@ -8,7 +8,7 @@ A Terminal User Interface (TUI) for browsing and searching OCaml OPAM packages.
 
 - 🖥️ **Browse Packages**: Terminal-based UI to view all available OPAM packages in your repository
 - 🔍 **Search**: Type to filter packages by name in real-time
-- ✅ **Installed Status**: Quickly see which packages are already installed (marked with ✓)
+- ✅ **Installed Status**: Quickly see which packages are already installed
 - 🧭 **Navigation**: Use arrow keys to navigate through the package list
 - 📜 **Scrolling**: Automatic scrolling for large package lists
 - 📋 **Package Details**: Press Enter to view detailed information about any package

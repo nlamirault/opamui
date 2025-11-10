@@ -84,7 +84,7 @@ let truncate str max_len =
 (* Render a single package line *)
 let render_package ~selected ~width pkg =
   let open Opam_client in
-  let status_icon = if pkg.installed then "✓" else " " in
+  let status_icon = if pkg.installed then "✅" else "  " in
   let name_width = 40 in
   let version_width = 15 in
   let synopsis_width = max 0 (width - name_width - version_width - 6) in
@@ -143,7 +143,7 @@ let render_details model =
     I.string value_attr selected_pkg.version
   ] in
 
-  let status_text = if selected_pkg.installed then "Installed ✓" else "Not installed" in
+  let status_text = if selected_pkg.installed then "Installed ✅" else "Not installed" in
   let status_line = I.hcat [
     I.string label_attr "Status: ";
     I.string status_attr status_text
