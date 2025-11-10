@@ -13,11 +13,18 @@ A Terminal User Interface (TUI) for browsing and searching OCaml OPAM packages.
 - 📜 **Scrolling**: Automatic scrolling for large package lists
 - 📋 **Package Details**: Press Enter to view detailed information about any package
 
-### Prerequisites
+## Prerequisites
 
-- OCaml >= 5.1
-- Dune >= 3.11
+- OCaml >= 4.08
+- Dune >= 3.20
 - OPAM package manager
+
+## Dependencies
+
+- **notty** (>= 0.2.3): Declarative terminal rendering library
+- **terminal_size** (>= 0.2.0): Get terminal dimensions
+- **lwt** (>= 5.0.0): Promises and async I/O
+- **str**: Regular expressions (stdlib, for ANSI stripping)
 
 ### Key Bindings
 
@@ -42,6 +49,7 @@ Potential features to add:
 - [ ] Show package authors and maintainers
 - [ ] Export filtered list
 - [ ] Configuration file support
+- [ ] Mouse support (Notty supports it!)
 
 ## Contributing
 
@@ -50,3 +58,9 @@ See CONTRIBUTING file for details
 ## License
 
 See LICENSE file for details.
+
+## Acknowledgments
+
+- Built with [Notty](https://github.com/pqwy/notty) - declarative terminal library
+- Inspired by [github-tui](https://github.com/chshersh/github-tui)
+- Previously used [Minttea](https://github.com/leostera/minttea) framework

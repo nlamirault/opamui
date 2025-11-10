@@ -7,6 +7,32 @@ type package = {
   installed : bool;
 }
 
+(* Strip ANSI escape sequences and control characters from a string *)
+let strip_ansi str =
+  try
+    (* Match various ANSI escape sequences:
+       - ESC [ ... m (SGR - colors and styles)
+       - ESC [ ... (any CSI sequence)
+       - ESC ] ... (OSC - operating system commands)
+       - Other ESC sequences *)
+    let ansi_csi = Str.regexp "\027\\[[0-9;?]*[a-zA-Z]" in
+    let result = Str.global_replace ansi_csi "" str in
+    let ansi_osc = Str.regexp "\027\\][^\007]*\007" in
+    let result = Str.global_replace ansi_osc "" result in
+    let ansi_other = Str.regexp "\027[^[]" in
+    let result = Str.global_replace ansi_other "" result in
+    (* Remove remaining control characters except space, tab, newline *)
+    let control_chars = Str.regexp "[\000-\008\011-\012\014-\031\127]" in
+    let result = Str.global_replace control_chars "" result in
+    (* Clean up multiple spaces *)
+    let multiple_spaces = Str.regexp " +" in
+    let result = Str.global_replace multiple_spaces " " result in
+    String.trim result
+  with _ ->
+    (* Fallback: if regex fails, just remove obvious control chars *)
+    String.map (fun c -> if c < ' ' && c <> '\n' && c <> '\t' then ' ' else c) str
+    |> String.trim
+
 (* Unused function - kept for reference *)
 [@@@warning "-32"]
 let _parse_package_line line =
@@ -68,7 +94,13 @@ let get_all_packages () =
           | name :: version :: synopsis_parts ->
               let synopsis = String.concat " " synopsis_parts in
               let installed = Hashtbl.mem installed_set name in
-              Some { name; version; synopsis; installed }
+              (* Strip ANSI codes from all text fields *)
+              Some {
+                name = strip_ansi name;
+                version = strip_ansi version;
+                synopsis = strip_ansi synopsis;
+                installed
+              }
           | _ -> None
       ) in
       Lwt.return packages

@@ -1,11 +1,4 @@
-(** UI module using Minttea for TUI *)
-
-(** Message types for UI events *)
-type msg =
-  | KeyPressed of Minttea.Event.key
-  | SearchTextChanged of string
-  | SelectionMoved of int
-  | Quit
+(** UI module using Notty for TUI *)
 
 (** View mode *)
 type view_mode =
@@ -20,7 +13,9 @@ type model = {
   scroll_offset : int;
   search_text : string;
   terminal_height : int;
+  terminal_width : int;
   view_mode : view_mode;
+  running : bool;
 }
 
 (** Run the TUI application with the given list of packages *)

@@ -1,4 +1,4 @@
 (executable
  (public_name opamui)
  (name main)
- (libraries opamui lwt lwt.unix))
+ (libraries opamui lwt lwt.unix notty notty.lwt))
