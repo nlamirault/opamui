@@ -19,14 +19,7 @@ A Terminal User Interface (TUI) for browsing and searching OCaml OPAM packages.
 - Dune >= 3.20
 - OPAM package manager
 
-## Dependencies
-
-- **notty** (>= 0.2.3): Declarative terminal rendering library
-- **terminal_size** (>= 0.2.0): Get terminal dimensions
-- **lwt** (>= 5.0.0): Promises and async I/O
-- **str**: Regular expressions (stdlib, for ANSI stripping)
-
-### Key Bindings
+## Key Bindings
 
 | Key                  | Action                                  |
 | -------------------- | --------------------------------------- |
