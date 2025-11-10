@@ -1,0 +1,15 @@
+
+headerPath = "hack/header.txt"
+
+includes = [
+  "*.ml",
+  "*.mli",
+  "*.yml",
+  "*.toml",
+  "*.sh",
+  "Makefile",
+]
+excludes = [
+  "hack/header.txt",
+  "*.json",
+]
