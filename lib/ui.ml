@@ -73,13 +73,13 @@ let truncate str max_len =
   if String.length str > max_len then String.sub str 0 (max_len - 3) ^ "..."
   else str
 
-(* Render a single package line *)
+(* Render a single package line in tabular format *)
 let render_package ~selected ~width pkg =
   let open Opam_client in
   let status_icon = if pkg.installed then "✅" else "  " in
   let name_width = 40 in
   let version_width = 15 in
-  let synopsis_width = max 0 (width - name_width - version_width - 6) in
+  let synopsis_width = max 0 (width - name_width - version_width - 10) in
 
   let name = truncate pkg.name name_width in
   let version = truncate pkg.version version_width in
@@ -89,21 +89,23 @@ let render_package ~selected ~width pkg =
     (* When selected: green background with black text, bold *)
     let attr = A.(bg green ++ fg black ++ st bold) in
     let line =
-      Printf.sprintf "[%s] %-40s %-15s %s" status_icon name version synopsis
+      Printf.sprintf " %s  %-40s  %-15s  %s" status_icon name version synopsis
     in
     I.string attr line
   else
-    (* Not selected: use custom colors for each part *)
-    let status_attr = if pkg.installed then A.(fg green) else A.(fg (gray 8)) in
+    (* Not selected: tabular format with custom colors *)
+    let status_attr = if pkg.installed then A.(fg green) else A.empty in
     let name_attr = A.(fg blue ++ st bold) in
     let version_attr = A.fg A.white in
     let synopsis_attr = A.fg A.white in
 
     let status_img =
-      I.string status_attr (Printf.sprintf "[%s] " status_icon)
+      I.string status_attr (Printf.sprintf " %s  " status_icon)
     in
-    let name_img = I.string name_attr (Printf.sprintf "%-40s " name) in
-    let version_img = I.string version_attr (Printf.sprintf "%-15s " version) in
+    let name_img = I.string name_attr (Printf.sprintf "%-40s  " name) in
+    let version_img =
+      I.string version_attr (Printf.sprintf "%-15s  " version)
+    in
     let synopsis_img = I.string synopsis_attr synopsis in
 
     I.hcat [ status_img; name_img; version_img; synopsis_img ]
@@ -180,18 +182,37 @@ let render_list model =
   let model = adjust_scroll_offset model in
   let vh = visible_height model in
 
-  (* Header *)
+  (* Title *)
   let total_packages = List.length model.filtered_packages in
-  let header_text =
+  let title_text =
     Printf.sprintf "OPAM Package Browser (%d packages)" total_packages
   in
-  let header_attr = A.(st bold ++ st underline) in
-  let header = I.string header_attr header_text in
+  let title_attr = A.(st bold ++ st underline) in
+  let title = I.string title_attr title_text in
 
   (* Search bar *)
   let search_text = Printf.sprintf "Search: %s_" model.search_text in
   let search_attr = A.fg A.yellow in
   let search_bar = I.string search_attr search_text in
+
+  (* Table header *)
+  let header_attr = A.(fg (gray 15) ++ st bold) in
+  let header_line =
+    I.hcat
+      [
+        I.string header_attr "    ";
+        (* Status column *)
+        I.string header_attr (Printf.sprintf "%-42s" "Name");
+        I.string header_attr (Printf.sprintf "%-17s" "Version");
+        I.string header_attr "Description";
+      ]
+  in
+
+  (* Separator line *)
+  let separator_width = min model.terminal_width 120 in
+  let separator =
+    I.string (A.fg (A.gray 8)) (String.make separator_width '-')
+  in
 
   (* Get visible packages *)
   let visible_packages =
@@ -237,7 +258,7 @@ let render_list model =
 
   (* Combine all elements *)
   I.vcat
-    ([ header; I.empty; search_bar; I.empty ]
+    ([ title; I.empty; search_bar; I.empty; header_line; separator ]
     @ package_images @ empty_lines @ [ I.empty; footer ])
 
 (* Render the current view *)
