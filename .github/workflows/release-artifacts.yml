@@ -32,6 +32,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     name: Release for ${{ matrix.os }}
 
+    outputs:
+      hash: ${{ steps.hash.outputs.hash }}
+      binary-name: ${{ steps.hash.outputs.binary-name }}
+
     steps:
     - name: Set TAG_NAME variable
       run: |
@@ -51,7 +55,7 @@ jobs:
       with:
         ocaml-compiler: 5.2.x
 
-    - name: 🎉 Install dependencies
+    - name: 📦 Install dependencies
       run: opam install . --deps-only --with-test
 
     - name: ✅ Build artifacts
@@ -62,6 +66,7 @@ jobs:
         OPAMYES: "true"
 
     - name: ✅ Prepare Artifacts
+      id: hash
       run: |
         os=$(echo "${{ runner.os }}" | tr '[:upper:]' '[:lower:]')
         arch=$(uname -m)
@@ -69,14 +74,88 @@ jobs:
         cp "$OPAM_DESTDIR/bin/opamui" $bin_name
         echo "BIN_NAME=$bin_name" >> $GITHUB_ENV
 
-    - name: Attest Build Provenance
+        echo "hash=$(sha256sum $bin_name | base64 -w0)" >> "$GITHUB_OUTPUT"
+        echo "binary-name=$bin_name" >> "$GITHUB_OUTPUT"
+
+    - name: 🔓 Attest Build Provenance
       uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
       with:
-        subject-path: "${{ env.BIN_NAME }}"
+        subject-path: "${{ steps.hash.outputs.binary-name }}"
 
-    - name: Upload Platform-Specific Binary
+    - name: ✅ Generate SBOM
+      uses: anchore/sbom-action@8e94d75ddd33f69f691467e42275782e4bfefe84 # v0.20.9
+      with:
+        format: "spdx-json"
+        output-file: "-${{ steps.hash.outputs.binary-name }}-sbom.spdx.json"
+
+    - name: 🔓 Attest
+      uses: actions/attest-sbom@4651f806c01d8637787e274ac3bdf724ef169f34 # v3.0.0
+      with:
+        subject-path: "${{ steps.hash.outputs.binary-name }}"
+        sbom-path: "${{ github.workspace }}/${{ steps.hash.outputs.binary-name }}.spdx.json"
+
+    - name: ⬆️ Upload Platform-Specific Binary
       uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836 # v2.3.3
       with:
         tag_name: ${{ env.TAG_NAME }}
         files: |
-          ${{ env.BIN_NAME }}
+          ${{ steps.hash.outputs.binary-name }}
+
+  provenance:
+    needs:
+    - release
+    permissions:
+      actions: read # To read the workflow path.
+      id-token: write # To sign the provenance.
+      contents: write # To add assets to a release.
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
+    with:
+      base64-subjects: "${{ needs.release.outputs.hash }}"
+      upload-assets: true # upload to a new release
+
+  verification:
+    needs:
+    - release
+    - provenance
+    runs-on: ubuntu-latest
+    permissions: read-all
+
+    name: Verification
+
+    steps:
+    - name: 🛡️ Harden the runner (Audit all outbound calls)
+      uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+      with:
+        egress-policy: audit
+
+    - name: 🎉 Install the verifier
+      uses: slsa-framework/slsa-verifier/actions/installer@6657aada084353c65e5dde35394b1a010289fab0 # v2.7.0
+
+    - name: ⬇️ Download assets
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        set -euo pipefail
+        echo "Download artifacts from ${GITHUB_REPOSITORY} for ${GITHUB_REF_NAME}"
+        gh -R "${GITHUB_REPOSITORY}" release download "${GITHUB_REF_NAME}" -p "${{ needs.release.outputs.binary-name }}*"
+        gh -R "${GITHUB_REPOSITORY}" release download "${GITHUB_REF_NAME}" -p "${{ needs.release.outputs.binary-name }}.intoto.jsonl"
+        ls
+
+    - name: ✅ Verify binary
+      env:
+        CHECKSUMS: ${{ needs.release.outputs.hash }}
+        PROVENANCE: "${{ needs.binary-provenance.outputs.provenance-name }}"
+      run: |
+        set -euo pipefail
+
+        slsa-verifier verify-artifact ${{ needs.release.outputs.binary-name }} \
+          --provenance-path ${{ needs.release.outputs.binary-name }}.intoto.jsonl \
+          --source-uri "github.com/${GITHUB_REPOSITORY}" \
+          --source-tag "${GITHUB_REF_NAME}"
+
+    - name: ✅ Verify build provenance
+      run: |
+        slsa-verifier verify-github-attestation xxxxxx \
+          --source-uri github.com/aspect-build/rules_lint \
+          --builder-id https://github.com/bazel-contrib/publish-to-bcr/.github/workflows/publish.yaml \
+          --attestation-path MODULE.bazel.intoto.jsonl
