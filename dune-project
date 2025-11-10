@@ -5,15 +5,15 @@
 (generate_opam_files true)
 
 (source
- (github username/reponame))
+ (github nlamirault/opamui))
 
-(authors "Author Name <author@example.com>")
+(authors "Nicolas Lamirault <nicolas.lamirault@gmail.com>")
 
-(maintainers "Maintainer Name <maintainer@example.com>")
+(maintainers "Nicolas Lamirault <nicolas.lamirault@gmail.com>")
 
-(license LICENSE)
+(license Apache-2.0)
 
-(documentation https://url/to/documentation)
+(documentation https://github.com/nlamirault/opamui)
 
 (package
  (name opamui)

@@ -23,7 +23,7 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
-    name: OS ${{ matrix.os }}
+    name: Build on ${{ matrix.os }}
 
     steps:
     - name: 🚚 Checkout
