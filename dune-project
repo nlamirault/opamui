@@ -22,9 +22,8 @@
  (depends
   ocaml
   dune
-  (minttea (>= 0.0.1))
-  (leaves (>= 0.0.1))
-  (spices (>= 0.0.1))
+  (notty (>= 0.2.3))
+  (terminal_size (>= 0.2.0))
   (lwt (>= 5.0.0)))
  (tags
   ("opam" "tui" "terminal" "packages")))

@@ -41,11 +41,11 @@ repos:
 # OCaml
 - repo: local
   hooks:
-  - id: dune-format
-    name: "📝 Dune / Formatting"
+  - id: ocaml-format
+    name: "📝 OCaml / Formatting"
     entry: dune fmt --auto
     language: system
-    files: ^$
+    pass_filenames: false
     stages: [pre-commit]
 # CI/CD
 - repo: https://github.com/python-jsonschema/check-jsonschema
