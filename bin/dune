@@ -1,0 +1,4 @@
+(executable
+ (public_name opamui)
+ (name main)
+ (libraries opamui lwt lwt.unix))

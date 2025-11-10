@@ -47,3 +47,18 @@ check-%:
 init: ## Install dependencies
 	@echo -e "$(INFO)$(INFO_COLOR)[opamui] Bootstrap$(NO_COLOR)"
 	@prek install
+
+.PHONY: build
+build: ## Build the application
+	@echo -e "$(INFO)$(INFO_COLOR)[dune] Build the application$(NO_COLOR)"
+	@dune build
+
+.PHONY: install
+install: ## Install the application
+	@echo -e "$(INFO)$(INFO_COLOR)[dune] Install the application$(NO_COLOR)"
+	@dune install
+
+.PHONY: run
+run: ## Execute the application
+	@echo -e "$(INFO)$(INFO_COLOR)[dune] Execute the application$(NO_COLOR)"
+	@dune exec opamui
