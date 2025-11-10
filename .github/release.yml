@@ -1,0 +1,24 @@
+---
+changelog:
+  categories:
+    - title: 🚀 Features
+      labels:
+      - "kind/feature"
+      - "kind/enhancement"
+      - "feature"
+      - "enhancement"
+    - title: "🐛 Bug Fixes"
+      labels:
+      - "kind/bug"
+      - "fix"
+      - "bugfix"
+      - "bug"
+    - title: "📝 Documentation"
+      labels:
+      - "kind/documentation"
+    - title: "💡 Question"
+      labels:
+      - "kind/question"
+    - title: 📦 Maintenance
+      labels:
+      - kind/maintenance
