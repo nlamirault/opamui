@@ -57,7 +57,7 @@ jobs:
     - name: ✅ Build artifacts
       run: |
         mkdir -p "$OPAM_DESTDIR"
-        opam install ./dunolint.opam --destdir="$OPAM_DESTDIR"
+        opam install ./opamui.opam --destdir="$OPAM_DESTDIR"
       env:
         OPAMYES: "true"
 
