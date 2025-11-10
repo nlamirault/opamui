@@ -16,6 +16,8 @@ type model = {
   terminal_width : int;
   view_mode : view_mode;
   running : bool;
+  opam_version : string;
+  opam_switch : string;
 }
 
 (* Filter packages based on search text *)
@@ -34,7 +36,7 @@ let filter_packages packages search_text =
       packages
 
 (* Initialize the model *)
-let init_model packages =
+let init_model packages opam_version opam_switch =
   let width =
     match Terminal_size.get_columns () with Some w -> w | None -> 80
   in
@@ -51,10 +53,12 @@ let init_model packages =
     terminal_width = width;
     view_mode = List;
     running = true;
+    opam_version;
+    opam_switch;
   }
 
 (* Calculate visible height for package list *)
-let visible_height model = max 1 (model.terminal_height - 6)
+let visible_height model = max 1 (model.terminal_height - 9)
 
 (* Adjust scroll offset to keep selected item visible *)
 let adjust_scroll_offset model =
@@ -109,6 +113,63 @@ let render_package ~selected ~width pkg =
     let synopsis_img = I.string synopsis_attr synopsis in
 
     I.hcat [ status_img; name_img; version_img; synopsis_img ]
+
+(* Render information panel with OPAM details *)
+let render_info_panel model =
+  let total_packages = List.length model.packages in
+  let installed_packages =
+    List.filter (fun pkg -> pkg.Opam_client.installed) model.packages
+    |> List.length
+  in
+
+  (* OPAM Version with OCaml emoji *)
+  let version_label_attr = A.(fg (gray 12)) in
+  let version_value_attr = A.(fg blue ++ st bold) in
+  let version_line =
+    I.hcat
+      [
+        I.string version_label_attr (Emoji.two_hump_camel ^ " OPAM: ");
+        I.string version_value_attr model.opam_version;
+      ]
+  in
+
+  (* Current Switch with light bulb emoji *)
+  let switch_label_attr = A.(fg (gray 12)) in
+  let switch_value_attr = A.(fg green ++ st bold) in
+  let switch_line =
+    I.hcat
+      [
+        I.string switch_label_attr "  💻 Switch: ";
+        I.string switch_value_attr model.opam_switch;
+      ]
+  in
+
+  (* Total Packages with package emoji *)
+  let total_label_attr = A.(fg (gray 12)) in
+  let total_value_attr = A.(fg white ++ st bold) in
+  let total_line =
+    I.hcat
+      [
+        I.string total_label_attr "📦 Total: ";
+        I.string total_value_attr (string_of_int total_packages);
+      ]
+  in
+
+  (* Installed Packages with package emoji *)
+  let installed_label_attr = A.(fg (gray 12)) in
+  let installed_value_attr = A.(fg green ++ st bold) in
+  let installed_line =
+    I.hcat
+      [
+        I.string installed_label_attr "  📦 Installed: ";
+        I.string installed_value_attr (string_of_int installed_packages);
+      ]
+  in
+
+  (* Combine info into two lines *)
+  let first_line = I.hcat [ version_line; switch_line ] in
+  let second_line = I.hcat [ total_line; installed_line ] in
+  I.vcat [ first_line; second_line ]
 
 (* Render package details view *)
 let render_details model =
@@ -190,6 +251,9 @@ let render_list model =
   let title_attr = A.(st bold ++ st underline) in
   let title = I.string title_attr title_text in
 
+  (* Info panel *)
+  let info_panel = render_info_panel model in
+
   (* Search bar *)
   let search_text = Printf.sprintf "Search: %s_" model.search_text in
   let search_attr = A.fg A.yellow in
@@ -258,7 +322,16 @@ let render_list model =
 
   (* Combine all elements *)
   I.vcat
-    ([ title; I.empty; search_bar; I.empty; header_line; separator ]
+    ([
+       title;
+       I.empty;
+       info_panel;
+       I.empty;
+       search_bar;
+       I.empty;
+       header_line;
+       separator;
+     ]
     @ package_images @ empty_lines @ [ I.empty; footer ])
 
 (* Render the current view *)
@@ -344,8 +417,8 @@ let rec event_loop term events model =
     | _ -> event_loop term events model
 
 (* Run the TUI application *)
-let run packages =
-  let model = init_model packages in
+let run packages opam_version opam_switch =
+  let model = init_model packages opam_version opam_switch in
   let term = Term.create () in
   let events = Term.events term in
   Lwt.finalize

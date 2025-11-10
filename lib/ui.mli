@@ -13,8 +13,11 @@ type model = {
   terminal_width : int;
   view_mode : view_mode;
   running : bool;
+  opam_version : string;
+  opam_switch : string;
 }
 (** Model representing the application state *)
 
-val run : Opam_client.package list -> unit Lwt.t
-(** Run the TUI application with the given list of packages *)
+val run : Opam_client.package list -> string -> string -> unit Lwt.t
+(** Run the TUI application with the given list of packages, OPAM version, and
+    switch *)

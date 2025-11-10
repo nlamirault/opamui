@@ -108,6 +108,30 @@ let get_installed_packages () =
       Lwt.return installed_set
   | _ -> Lwt.return (Hashtbl.create 0)
 
+let get_opam_version () =
+  let* status =
+    Lwt_unix.system "opam --version > /tmp/opamui_version.txt 2>&1"
+  in
+  match status with
+  | Unix.WEXITED 0 ->
+      let* ic = Lwt_io.open_file ~mode:Lwt_io.Input "/tmp/opamui_version.txt" in
+      let* line = Lwt_io.read_line_opt ic in
+      let* () = Lwt_io.close ic in
+      Lwt.return (match line with Some v -> strip_ansi v | None -> "unknown")
+  | _ -> Lwt.return "unknown"
+
+let get_current_switch () =
+  let* status =
+    Lwt_unix.system "opam switch show > /tmp/opamui_switch.txt 2>&1"
+  in
+  match status with
+  | Unix.WEXITED 0 ->
+      let* ic = Lwt_io.open_file ~mode:Lwt_io.Input "/tmp/opamui_switch.txt" in
+      let* line = Lwt_io.read_line_opt ic in
+      let* () = Lwt_io.close ic in
+      Lwt.return (match line with Some s -> strip_ansi s | None -> "unknown")
+  | _ -> Lwt.return "unknown"
+
 let get_all_packages () =
   let* installed_set = get_installed_packages () in
   let* status =
