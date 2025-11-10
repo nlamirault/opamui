@@ -24,7 +24,8 @@
   dune
   (notty (>= 0.2.3))
   (terminal_size (>= 0.2.0))
-  (lwt (>= 5.0.0)))
+  (lwt (>= 5.0.0))
+  emoji)
  (tags
   ("opam" "tui" "terminal" "packages")))
 

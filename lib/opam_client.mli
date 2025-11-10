@@ -19,6 +19,13 @@ val strip_ansi : string -> string
     After stripping:
     "Package description with colors" *)
 
+val get_opam_version : unit -> string Lwt.t
+(** Get the current OPAM version. Returns "unknown" if unable to determine. *)
+
+val get_current_switch : unit -> string Lwt.t
+(** Get the current OPAM switch name. Returns "unknown" if unable to determine.
+*)
+
 val get_all_packages : unit -> package list Lwt.t
 (** Get all available OPAM packages with their metadata. All text fields are
     automatically sanitized to remove ANSI codes. *)
