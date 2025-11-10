@@ -1,11 +1,8 @@
 (** UI module using Notty for TUI *)
 
 (** View mode *)
-type view_mode =
-  | List
-  | Details
+type view_mode = List | Details
 
-(** Model representing the application state *)
 type model = {
   packages : Opam_client.package list;
   filtered_packages : Opam_client.package list;
@@ -17,6 +14,7 @@ type model = {
   view_mode : view_mode;
   running : bool;
 }
+(** Model representing the application state *)
 
-(** Run the TUI application with the given list of packages *)
 val run : Opam_client.package list -> unit Lwt.t
+(** Run the TUI application with the given list of packages *)

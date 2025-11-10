@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright (C) Nicolas Lamirault <nicolas.lamirault@gmail.com>
+# SPDX-License-Identifier: Apache-2.0
+
 BANNER = O P A M U I
 
 SHELL = /bin/bash -o pipefail
