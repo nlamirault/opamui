@@ -58,7 +58,7 @@ let init_model packages opam_version opam_switch =
   }
 
 (* Calculate visible height for package list *)
-let visible_height model = max 1 (model.terminal_height - 9)
+let visible_height model = max 1 (model.terminal_height - 15)
 
 (* Adjust scroll offset to keep selected item visible *)
 let adjust_scroll_offset model =
@@ -114,62 +114,146 @@ let render_package ~selected ~width pkg =
 
     I.hcat [ status_img; name_img; version_img; synopsis_img ]
 
-(* Render information panel with OPAM details *)
-let render_info_panel model =
+(* Render overview panel with frame *)
+let render_overview_panel model =
   let total_packages = List.length model.packages in
   let installed_packages =
     List.filter (fun pkg -> pkg.Opam_client.installed) model.packages
     |> List.length
   in
+  let width = model.terminal_width in
+
+  (* Title with full width border *)
+  let title_attr = A.(fg cyan ++ st bold) in
+  let title_text = "🖥️ OpamUI" in
+  let title_len = String.length title_text + 4 in
+  (* account for "┌─ ─" *)
+  let remaining = max 0 (width - title_len - 1) in
+  let title_line =
+    Printf.sprintf "┌─ %s %s┐" title_text (String.make remaining '-')
+  in
+  let title = I.string title_attr title_line in
 
   (* OPAM Version with OCaml emoji *)
   let version_label_attr = A.(fg (gray 12)) in
   let version_value_attr = A.(fg blue ++ st bold) in
-  let version_line =
+  let version_content =
     I.hcat
       [
         I.string version_label_attr (Emoji.two_hump_camel ^ " OPAM: ");
         I.string version_value_attr model.opam_version;
       ]
   in
+  let version_line =
+    I.hcat
+      [
+        I.string A.empty "│ ";
+        version_content;
+        I.void (max 0 (width - I.width version_content - 3)) 1;
+        I.string A.empty "│";
+      ]
+  in
 
   (* Current Switch with light bulb emoji *)
   let switch_label_attr = A.(fg (gray 12)) in
   let switch_value_attr = A.(fg green ++ st bold) in
+  let switch_content =
+    I.hcat
+      [
+        I.string switch_label_attr "💡 Switch: ";
+        I.string switch_value_attr model.opam_switch;
+      ]
+  in
   let switch_line =
     I.hcat
       [
-        I.string switch_label_attr "  💻 Switch: ";
-        I.string switch_value_attr model.opam_switch;
+        I.string A.empty "│ ";
+        switch_content;
+        I.void (max 0 (width - I.width switch_content - 3)) 1;
+        I.string A.empty "│";
       ]
   in
 
   (* Total Packages with package emoji *)
   let total_label_attr = A.(fg (gray 12)) in
   let total_value_attr = A.(fg white ++ st bold) in
-  let total_line =
+  let total_content =
     I.hcat
       [
         I.string total_label_attr "📦 Total: ";
         I.string total_value_attr (string_of_int total_packages);
       ]
   in
+  let total_line =
+    I.hcat
+      [
+        I.string A.empty "│ ";
+        total_content;
+        I.void (max 0 (width - I.width total_content - 3)) 1;
+        I.string A.empty "│";
+      ]
+  in
 
   (* Installed Packages with package emoji *)
   let installed_label_attr = A.(fg (gray 12)) in
   let installed_value_attr = A.(fg green ++ st bold) in
-  let installed_line =
+  let installed_content =
     I.hcat
       [
-        I.string installed_label_attr "  📦 Installed: ";
+        I.string installed_label_attr "📦 Installed: ";
         I.string installed_value_attr (string_of_int installed_packages);
       ]
   in
+  let installed_line =
+    I.hcat
+      [
+        I.string A.empty "│ ";
+        installed_content;
+        I.void (max 0 (width - I.width installed_content - 3)) 1;
+        I.string A.empty "│";
+      ]
+  in
 
-  (* Combine info into two lines *)
-  let first_line = I.hcat [ version_line; switch_line ] in
-  let second_line = I.hcat [ total_line; installed_line ] in
-  I.vcat [ first_line; second_line ]
+  (* Bottom border *)
+  let bottom =
+    I.string A.empty (Printf.sprintf "└%s┘" (String.make (width - 2) '-'))
+  in
+
+  I.vcat
+    [ title; version_line; switch_line; total_line; installed_line; bottom ]
+
+(* Render search panel with frame *)
+let render_search_panel model =
+  let width = model.terminal_width in
+
+  (* Title with full width border *)
+  let title_text = "Search" in
+  let title_len = String.length title_text + 4 in
+  let remaining = max 0 (width - title_len - 1) in
+  let title_line =
+    Printf.sprintf "┌─ %s %s┐" title_text (String.make remaining '-')
+  in
+  let title = I.string (A.fg (A.gray 12)) title_line in
+
+  (* Search input with cursor *)
+  let search_attr = A.fg A.yellow in
+  let search_content = I.string search_attr (model.search_text ^ "_") in
+  let search_line =
+    I.hcat
+      [
+        I.string A.empty "│ ";
+        search_content;
+        I.void (max 0 (width - I.width search_content - 3)) 1;
+        I.string A.empty "│";
+      ]
+  in
+
+  (* Bottom border *)
+  let bottom =
+    I.string A.empty (Printf.sprintf "└%s┘" (String.make (width - 2) '-'))
+  in
+
+  I.vcat [ title; search_line; bottom ]
 
 (* Render package details view *)
 let render_details model =
@@ -243,25 +327,26 @@ let render_list model =
   let model = adjust_scroll_offset model in
   let vh = visible_height model in
 
-  (* Title *)
-  let total_packages = List.length model.filtered_packages in
-  let title_text =
-    Printf.sprintf "OPAM Package Browser (%d packages)" total_packages
+  (* Overview panel *)
+  let overview_panel = render_overview_panel model in
+
+  (* Search panel *)
+  let search_panel = render_search_panel model in
+
+  (* Listing panel title with full width *)
+  let width = model.terminal_width in
+  let total_filtered = List.length model.filtered_packages in
+  let listing_title_text = Printf.sprintf "Packages (%d)" total_filtered in
+  let title_len = String.length listing_title_text + 4 in
+  let remaining = max 0 (width - title_len - 1) in
+  let listing_title_line =
+    Printf.sprintf "┌─ %s %s┐" listing_title_text (String.make remaining '-')
   in
-  let title_attr = A.(st bold ++ st underline) in
-  let title = I.string title_attr title_text in
+  let listing_title = I.string (A.fg (A.gray 12)) listing_title_line in
 
-  (* Info panel *)
-  let info_panel = render_info_panel model in
-
-  (* Search bar *)
-  let search_text = Printf.sprintf "Search: %s_" model.search_text in
-  let search_attr = A.fg A.yellow in
-  let search_bar = I.string search_attr search_text in
-
-  (* Table header *)
+  (* Table header with border *)
   let header_attr = A.(fg (gray 15) ++ st bold) in
-  let header_line =
+  let header_content =
     I.hcat
       [
         I.string header_attr "    ";
@@ -271,11 +356,22 @@ let render_list model =
         I.string header_attr "Description";
       ]
   in
+  let header_line =
+    I.hcat
+      [
+        I.string A.empty "│ ";
+        header_content;
+        I.void (max 0 (width - I.width header_content - 3)) 1;
+        I.string A.empty "│";
+      ]
+  in
 
-  (* Separator line *)
-  let separator_width = min model.terminal_width 120 in
+  (* Separator line with border *)
+  let separator_content =
+    I.string (A.fg (A.gray 8)) (String.make (width - 4) '-')
+  in
   let separator =
-    I.string (A.fg (A.gray 8)) (String.make separator_width '-')
+    I.hcat [ I.string A.empty "│ "; separator_content; I.string A.empty " │" ]
   in
 
   (* Get visible packages *)
@@ -296,43 +392,69 @@ let render_list model =
     take vh l
   in
 
-  (* Render package list *)
+  (* Render package list with borders *)
   let package_images =
     List.mapi
       (fun idx pkg ->
         let actual_idx = model.scroll_offset + idx in
-        render_package
-          ~selected:(actual_idx = model.selected_idx)
-          ~width:model.terminal_width pkg)
+        let pkg_content =
+          render_package
+            ~selected:(actual_idx = model.selected_idx)
+            ~width:(width - 4) pkg
+        in
+        I.hcat
+          [
+            I.string A.empty "│ ";
+            pkg_content;
+            I.void (max 0 (width - I.width pkg_content - 3)) 1;
+            I.string A.empty "│";
+          ])
       visible_packages
   in
 
-  (* Add empty lines if needed *)
+  (* Add empty lines with borders if needed *)
+  let empty_line =
+    I.hcat [ I.string A.empty "│"; I.void (width - 2) 1; I.string A.empty "│" ]
+  in
   let empty_lines =
-    List.init (max 0 (vh - List.length package_images)) (fun _ -> I.empty)
+    List.init (max 0 (vh - List.length package_images)) (fun _ -> empty_line)
   in
 
-  (* Footer with help *)
+  (* Footer with help inside border *)
   let footer_attr = A.fg A.white in
-  let footer =
+  let footer_content =
     I.string footer_attr
       "↑/↓: Navigate | Enter: Details | Type to search | Backspace: Delete | \
        Esc: Clear | q: Quit"
+  in
+  let footer_line =
+    I.hcat
+      [
+        I.string A.empty "│ ";
+        footer_content;
+        I.void (max 0 (width - I.width footer_content - 3)) 1;
+        I.string A.empty "│";
+      ]
+  in
+
+  (* Bottom border of listing panel *)
+  let listing_bottom =
+    I.string A.empty (Printf.sprintf "└%s┘" (String.make (width - 2) '-'))
   in
 
   (* Combine all elements *)
   I.vcat
     ([
-       title;
+       overview_panel;
        I.empty;
-       info_panel;
+       search_panel;
        I.empty;
-       search_bar;
-       I.empty;
+       listing_title;
        header_line;
        separator;
      ]
-    @ package_images @ empty_lines @ [ I.empty; footer ])
+    @ package_images @ empty_lines
+    @ [ footer_line; listing_bottom ])
 
 (* Render the current view *)
 let render model =
