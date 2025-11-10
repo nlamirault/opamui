@@ -53,14 +53,8 @@ Potential features to add:
 
 ## Contributing
 
-See CONTRIBUTING file for details
+See [CONTRIBUTING](CONTRIBUTING.md) file for details
 
 ## License
 
-See LICENSE file for details.
-
-## Acknowledgments
-
-- Built with [Notty](https://github.com/pqwy/notty) - declarative terminal library
-- Inspired by [github-tui](https://github.com/chshersh/github-tui)
-- Previously used [Minttea](https://github.com/leostera/minttea) framework
+See [LICENSE](LICENSE) file for details.
