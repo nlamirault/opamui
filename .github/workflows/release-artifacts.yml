@@ -1,0 +1,82 @@
+# SPDX-FileCopyrightText: Copyright (C) Nicolas Lamirault <nicolas.lamirault@gmail.com>
+# SPDX-License-Identifier: Apache-2.0
+
+---
+name: Release / Artifacts
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Git tag to build artifacts for"
+        required: true
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  release:
+    strategy:
+      matrix:
+        os:
+        - ubuntu-latest
+        - macos-latest
+        - windows-latest
+    env:
+      OPAM_DESTDIR: ${{ github.workspace }}/opam-destdir
+
+    runs-on: ${{ matrix.os }}
+    name: Release for ${{ matrix.os }}
+
+    steps:
+    - name: Set TAG_NAME variable
+      run: |
+        if [ -n "${{ github.event.inputs.tag }}" ]; then
+          echo "TAG_NAME=${{ github.event.inputs.tag }}" >> $GITHUB_ENV
+        else
+          echo "TAG_NAME=${{ github.ref_name }}" >> $GITHUB_ENV
+        fi
+
+    - name: 🚚 Checkout
+      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      with:
+        fetch-depth: 0
+
+    - name: 🎉 Set-up OCaml
+      uses: ocaml/setup-ocaml@ddef532293b85980b315344506def8eb09917e2c # v3.4.6
+      with:
+        ocaml-compiler: 5.2.x
+
+    - name: 🎉 Install dependencies
+      run: opam install . --deps-only --with-test
+
+    - name: ✅ Build artifacts
+      run: |
+        mkdir -p "$OPAM_DESTDIR"
+        opam install ./dunolint.opam --destdir="$OPAM_DESTDIR"
+      env:
+        OPAMYES: "true"
+
+    - name: ✅ Prepare Artifacts
+      run: |
+        os=$(echo "${{ runner.os }}" | tr '[:upper:]' '[:lower:]')
+        arch=$(uname -m)
+        bin_name="${{ github.workspace }}/opamui-$TAG_NAME-$os-$arch"
+        cp "$OPAM_DESTDIR/bin/opamui" $bin_name
+        echo "BIN_NAME=$bin_name" >> $GITHUB_ENV
+
+    - name: Attest Build Provenance
+      uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
+      with:
+        subject-path: "${{ env.BIN_NAME }}"
+
+    - name: Upload Platform-Specific Binary
+      uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836 # v2.3.3
+      with:
+        tag_name: ${{ env.TAG_NAME }}
+        files: |
+          ${{ env.BIN_NAME }}
