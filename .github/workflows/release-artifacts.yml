@@ -84,16 +84,12 @@ jobs:
         echo "BIN_NAME=$bin_name" >> $GITHUB_ENV
 
         # Cross-platform hash calculation
-        # if [[ "${{ runner.os }}" == "macOS" ]]; then
-        #   sha256_hash=$(shasum -a 256 $bin_name | awk '{print $1}' | base64)
-        # else
-        #   sha256_hash=$(sha256sum $bin_name | awk '{print $1}' | base64 -w0)
-        # fi
-        # echo "hash-${{ matrix.os }}=$sha256_hash" >> "${GITHUB_OUTPUT}"
-
-        (sha256sum -t $bin_name || shasum -a 256 $bin_name) > checksum
-        echo "hash-${{ matrix.os }}=$(base64 -w0 checksum || base64 checksum)" >> "${GITHUB_OUTPUT}"
-
+        if [[ "${{ runner.os }}" == "macOS" ]]; then
+          checksum=$(shasum -a 256 $bin_name | base64)
+        else
+          checksum=$(sha256sum $bin_name | base64 -w0)
+        fi
+        echo "hash-${{ matrix.os }}=$sha256_hash" >> "${GITHUB_OUTPUT}"
         # echo "hash=$hash" >> "$GITHUB_OUTPUT"
 
         echo "binary-name=$bin_name" >> "$GITHUB_OUTPUT"
