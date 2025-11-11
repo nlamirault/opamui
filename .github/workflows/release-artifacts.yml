@@ -73,6 +73,8 @@ jobs:
     - name: ✅ Prepare Artifacts
       id: hash
       run: |
+        set -euo pipefail
+
         os=$(echo "${{ runner.os }}" | tr '[:upper:]' '[:lower:]')
         arch=$(uname -m)
         bin_name="${{ github.workspace }}/opamui-$TAG_NAME-$os-$arch"
@@ -148,7 +150,7 @@ jobs:
     uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
     with:
       # base64-subjects: "${{ needs.release.outputs.hash }}"
-      base64-subjects: "${{ needs.release.outputs[format('hash-{0}', matrix.os)] }}"
+      base64-subjects: "${{ needs..outputs[format('hash-{0}', matrix.os)] }}"
       upload-assets: true # upload to a new release
 
   verification:
