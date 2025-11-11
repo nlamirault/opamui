@@ -83,9 +83,9 @@ jobs:
 
         # Cross-platform hash calculation
         if [[ "${{ runner.os }}" == "macOS" ]]; then
-          sha256_hash=$(shasum -a 256 $bin_name | awk '{print $1}')
+          sha256_hash=$(shasum -a 256 $bin_name | awk '{print $1}' | base64)
         else
-          sha256_hash=$(sha256sum $bin_name | awk '{print $1}')
+          sha256_hash=$(sha256sum $bin_name | awk '{print $1}' | base64 -w0)
         fi
 
         echo "hash-${{ matrix.os }}=$sha256_hash" >> "${GITHUB_OUTPUT}"
