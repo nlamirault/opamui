@@ -129,6 +129,7 @@ jobs:
         files: |
           ${{ steps.hash.outputs.binary-name }}
           ${{ steps.hash.outputs.artifact-name }}.spdx.json
+          ${{ steps.hash.outputs.artifact-name }}.intoto.jsonl
 
   provenance:
     needs:
