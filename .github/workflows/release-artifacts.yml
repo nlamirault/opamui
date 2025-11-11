@@ -72,19 +72,28 @@ jobs:
         os=$(echo "${{ runner.os }}" | tr '[:upper:]' '[:lower:]')
         arch=$(uname -m)
         bin_name="${{ github.workspace }}/opamui-$TAG_NAME-$os-$arch"
+        artifact_name="opamui-$TAG_NAME-$os-$arch"
         cp "$OPAM_DESTDIR/bin/opamui" $bin_name
         echo "BIN_NAME=$bin_name" >> $GITHUB_ENV
 
         # Cross-platform hash calculation
         if [[ "${{ runner.os }}" == "macOS" ]]; then
-          hash=$(shasum -a 256 $bin_name | awk '{print $1}' | base64)
+          sha256_hash=$(shasum -a 256 $bin_name | awk '{print $1}')
         else
-          hash=$(sha256sum $bin_name | awk '{print $1}' | base64 -w0)
+          sha256_hash=$(sha256sum $bin_name | awk '{print $1}')
+        fi
+
+        # Create subject in format: name:sha256:hash and base64 encode
+        subject="${artifact_name}:${sha256_hash}"
+        if [[ "${{ runner.os }}" == "macOS" ]]; then
+          hash=$(echo -n "$subject" | base64)
+        else
+          hash=$(echo -n "$subject" | base64 -w0)
         fi
 
         echo "hash=$hash" >> "$GITHUB_OUTPUT"
         echo "binary-name=$bin_name" >> "$GITHUB_OUTPUT"
-        echo "artifact-name=opamui-$TAG_NAME-$os-$arch" >> "$GITHUB_OUTPUT"
+        echo "artifact-name=$artifact_name" >> "$GITHUB_OUTPUT"
 
         ls -alFrt
         ls -alFrt $bin_name
