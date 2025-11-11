@@ -89,7 +89,7 @@ jobs:
       uses: anchore/sbom-action@8e94d75ddd33f69f691467e42275782e4bfefe84 # v0.20.9
       with:
         format: "spdx-json"
-        output-file: "${{ steps.hash.outputs.binary-name }}-sbom.spdx.json"
+        artifact-name: "${{ steps.hash.outputs.binary-name }}.spdx.json"
         file: "${{ steps.hash.outputs.binary-name }}"
 
     - name: 🔓 Attest SBOM
@@ -98,7 +98,12 @@ jobs:
         subject-path: "${{ steps.hash.outputs.binary-name }}"
         sbom-path: "${{ github.workspace }}/${{ steps.hash.outputs.binary-name }}.spdx.json"
 
-    - name: ⬆️ Upload Platform-Specific Binary
+    - name: ⬆️ Publish SBOM
+      uses: anchore/sbom-action/publish-sbom@v0
+      with:
+        sbom-artifact-match: ".*\\.spdx.json$"
+
+    - name: ⬆️ Upload artifacts
       uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836 # v2.3.3
       with:
         tag_name: ${{ env.TAG_NAME }}
