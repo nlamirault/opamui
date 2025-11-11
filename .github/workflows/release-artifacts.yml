@@ -99,7 +99,7 @@ jobs:
       with:
         format: "spdx-json"
         artifact-name: "${{ steps.hash.outputs.artifact-name }}.spdx.json"
-        path: "${{ steps.hash.outputs.binary-name }}"
+        path: "${{ github.workspace }}"
 
     - name: 🔓 Attest SBOM
       uses: actions/attest-sbom@4651f806c01d8637787e274ac3bdf724ef169f34 # v3.0.0
