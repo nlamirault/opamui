@@ -129,7 +129,6 @@ jobs:
         files: |
           ${{ steps.hash.outputs.binary-name }}
           ${{ steps.hash.outputs.artifact-name }}.spdx.json
-          ${{ steps.hash.outputs.artifact-name }}.intoto.jsonl
 
   provenance:
     needs:
@@ -144,11 +143,24 @@ jobs:
       actions: read # To read the workflow path.
       id-token: write # To sign the provenance.
       contents: write # To add assets to a release.
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
-    with:
-      # base64-subjects: "${{ needs.release.outputs.hash }}"
-      base64-subjects: "${{ needs.release.outputs[format('hash-{0}', matrix.os)] }}"
-      upload-assets: true # upload to a new release
+
+    name: Provenance for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: 🔓 Provenance
+      uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
+      with:
+        # base64-subjects: "${{ needs.release.outputs.hash }}"
+        base64-subjects: "${{ needs.release.outputs[format('hash-{0}', matrix.os)] }}"
+        upload-assets: true # upload to a new release
+
+    - name: ⬆️ Upload provenance
+      uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836 # v2.3.3
+      with:
+        tag_name: ${{ env.TAG_NAME }}
+        files: |
+          multiple.intoto.jsonl
 
   verification:
     needs:
@@ -182,7 +194,7 @@ jobs:
 
         echo "Download artifacts from ${GITHUB_REPOSITORY} for ${release_name}"
         gh -R "${GITHUB_REPOSITORY}" release download "${release_name}" -p "${{ needs.release.outputs.artifact-name }}*"
-        gh -R "${GITHUB_REPOSITORY}" release download "${release_name}" -p "${{ needs.release.outputs.artifact-name }}.intoto.jsonl"
+        gh -R "${GITHUB_REPOSITORY}" release download "${release_name}" -p "multiple.intoto.jsonl"
         ls
 
     - name: ✅ Verify binary
