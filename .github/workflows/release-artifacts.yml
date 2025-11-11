@@ -89,7 +89,7 @@ jobs:
         else
           checksum=$(sha256sum $bin_name | base64 -w0)
         fi
-        echo "hash-${{ matrix.os }}=$sha256_hash" >> "${GITHUB_OUTPUT}"
+        echo "hash-${{ matrix.os }}=$checksum" >> "${GITHUB_OUTPUT}"
         # echo "hash=$hash" >> "$GITHUB_OUTPUT"
 
         echo "binary-name=$bin_name" >> "$GITHUB_OUTPUT"
