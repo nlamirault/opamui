@@ -77,6 +77,9 @@ jobs:
         echo "hash=$(sha256sum $bin_name | base64 -w0)" >> "$GITHUB_OUTPUT"
         echo "binary-name=$bin_name" >> "$GITHUB_OUTPUT"
 
+        ls -alFrt
+        ls -alFrt $bin_name
+
     - name: 🔓 Attest Artifacts Provenance
       uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
       with:
@@ -86,7 +89,7 @@ jobs:
       uses: anchore/sbom-action@8e94d75ddd33f69f691467e42275782e4bfefe84 # v0.20.9
       with:
         format: "spdx-json"
-        output-file: "-${{ steps.hash.outputs.binary-name }}-sbom.spdx.json"
+        output-file: "${{ steps.hash.outputs.binary-name }}-sbom.spdx.json"
         file: "${{ steps.hash.outputs.binary-name }}"
 
     - name: 🔓 Attest SBOM
