@@ -75,7 +75,14 @@ jobs:
         cp "$OPAM_DESTDIR/bin/opamui" $bin_name
         echo "BIN_NAME=$bin_name" >> $GITHUB_ENV
 
-        echo "hash=$(sha256sum $bin_name | base64 -w0)" >> "$GITHUB_OUTPUT"
+        # Cross-platform hash calculation
+        if [[ "${{ runner.os }}" == "macOS" ]]; then
+          hash=$(shasum -a 256 $bin_name | awk '{print $1}' | base64)
+        else
+          hash=$(sha256sum $bin_name | awk '{print $1}' | base64 -w0)
+        fi
+
+        echo "hash=$hash" >> "$GITHUB_OUTPUT"
         echo "binary-name=$bin_name" >> "$GITHUB_OUTPUT"
         echo "artifact-name=opamui-$TAG_NAME-$os-$arch" >> "$GITHUB_OUTPUT"
 

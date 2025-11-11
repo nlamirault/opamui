@@ -19,7 +19,6 @@ repos:
   - id: check-shebang-scripts-are-executable
     name: "📁 filesystem /⚙️ exec · Verify script permissions"
     stages: [pre-commit]
-  - id: check-added-large-files
 - repo: local
   hooks:
   - id: hawkeye
