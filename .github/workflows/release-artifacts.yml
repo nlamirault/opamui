@@ -40,9 +40,11 @@ jobs:
       # hash-windows-latest: ${{ steps.hash.outputs.hash-windows-latest }}
       binary-name: ${{ steps.hash.outputs.binary-name }}
       artifact-name: ${{ steps.hash.outputs.artifact-name }}
+      tag-name: ${{ steps.hash.outputs.tag-name }}
 
     steps:
-    - name: Set TAG_NAME variable
+    - name: 🔧 Set TAG_NAME variable
+      id: tag
       run: |
         if [ -n "${{ github.event.inputs.tag }}" ]; then
           echo "TAG_NAME=${{ github.event.inputs.tag }}" >> $GITHUB_ENV
@@ -94,6 +96,7 @@ jobs:
 
         echo "binary-name=$bin_name" >> "$GITHUB_OUTPUT"
         echo "artifact-name=$artifact_name" >> "$GITHUB_OUTPUT"
+        echo "tag-name=$TAG_NAME" >> "${GITHUB_OUTPUT}"
 
     - name: 🔓 Attest Artifacts Provenance
       uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
@@ -144,23 +147,12 @@ jobs:
       id-token: write # To sign the provenance.
       contents: write # To add assets to a release.
 
-    name: Provenance for ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-
-    steps:
-    - name: 🔓 Provenance
-      uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
-      with:
-        # base64-subjects: "${{ needs.release.outputs.hash }}"
-        base64-subjects: "${{ needs.release.outputs[format('hash-{0}', matrix.os)] }}"
-        upload-assets: true # upload to a new release
-
-    - name: ⬆️ Upload provenance
-      uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836 # v2.3.3
-      with:
-        tag_name: ${{ env.TAG_NAME }}
-        files: |
-          multiple.intoto.jsonl
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
+    with:
+      # base64-subjects: "${{ needs.release.outputs.hash }}"
+      base64-subjects: "${{ needs.release.outputs[format('hash-{0}', matrix.os)] }}"
+      upload-assets: true # upload to a new release
+      upload-tag-name: ${{ needs.relase.outputs.tag-name }}
 
   verification:
     needs:
