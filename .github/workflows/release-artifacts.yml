@@ -95,19 +95,12 @@ jobs:
         subject-path: "${{ steps.hash.outputs.binary-name }}"
 
     - name: ✅ Generate SBOM
-      id: sbom
       uses: anchore/sbom-action@8e94d75ddd33f69f691467e42275782e4bfefe84 # v0.20.9
+      id: sbom
       with:
-        format: "spdx-json"
-        output-file: "${{ steps.hash.outputs.artifact-name }}.spdx.json"
-        path: "${{ github.workspace }}"
-
-    - name: 🔍 Debug - List SBOM files
-      run: |
-        echo "Looking for SBOM file..."
-        ls -la *.spdx.json || echo "No .spdx.json files in workspace"
-        ls -la ${{ steps.hash.outputs.artifact-name }}.spdx.json || echo "Expected SBOM file not found"
-        find . -name "*.spdx.json" -type f || echo "No SBOM files found anywhere"
+        path: ${{ github.workspace }}
+        format: spdx-json
+        output-file: ${{ steps.hash.outputs.artifact-name }}.spdx.json
 
     - name: 🔓 Attest SBOM
       uses: actions/attest-sbom@4651f806c01d8637787e274ac3bdf724ef169f34 # v3.0.0
@@ -115,10 +108,12 @@ jobs:
         subject-path: "${{ steps.hash.outputs.binary-name }}"
         sbom-path: "${{ steps.hash.outputs.artifact-name }}.spdx.json"
 
-    - name: ⬆️ Publish SBOM
-      uses: anchore/sbom-action/publish-sbom@v0
+    - name: ⬆️ Upload SBOM as artifact
+      uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
       with:
-        sbom-artifact-match: ".*\\.spdx.json$"
+        name: ${{ steps.hash.outputs.artifact-name }}-sbom
+        path: ${{ steps.hash.outputs.artifact-name }}.spdx.json
+        retention-days: 90
 
     - name: ⬆️ Upload artifacts
       uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836 # v2.3.3
@@ -170,7 +165,6 @@ jobs:
     - name: ✅ Verify binary
       env:
         CHECKSUMS: ${{ needs.release.outputs.hash }}
-        PROVENANCE: "${{ needs.binary-provenance.outputs.provenance-name }}"
       run: |
         set -euo pipefail
 
@@ -178,10 +172,3 @@ jobs:
           --provenance-path ${{ needs.release.outputs.artifact-name }}.intoto.jsonl \
           --source-uri "github.com/${GITHUB_REPOSITORY}" \
           --source-tag "${GITHUB_REF_NAME}"
-
-    - name: ✅ Verify build provenance
-      run: |
-        slsa-verifier verify-github-attestation xxxxxx \
-          --source-uri github.com/aspect-build/rules_lint \
-          --builder-id https://github.com/bazel-contrib/publish-to-bcr/.github/workflows/publish.yaml \
-          --attestation-path MODULE.bazel.intoto.jsonl
