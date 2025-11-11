@@ -84,19 +84,17 @@ jobs:
         fi
 
         # Create subject in format: name:sha256:hash and base64 encode
-        subject="${artifact_name}:${sha256_hash}"
-        if [[ "${{ runner.os }}" == "macOS" ]]; then
-          hash=$(echo -n "$subject" | base64)
-        else
-          hash=$(echo -n "$subject" | base64 -w0)
-        fi
+        # subject="${artifact_name}:${sha256_hash}"
+        # if [[ "${{ runner.os }}" == "macOS" ]]; then
+        #   hash=$(echo -n "$subject" | base64)
+        # else
+        #   hash=$(echo -n "$subject" | base64 -w0)
+        # fi
 
-        echo "hash=$hash" >> "$GITHUB_OUTPUT"
+        echo "hash-${{ matrix.os }}=$sha256_hash" >> "$GITHUB_OUTPUT"
+        # echo "hash=$hash" >> "$GITHUB_OUTPUT"
         echo "binary-name=$bin_name" >> "$GITHUB_OUTPUT"
         echo "artifact-name=$artifact_name" >> "$GITHUB_OUTPUT"
-
-        ls -alFrt
-        ls -alFrt $bin_name
 
     - name: 🔓 Attest Artifacts Provenance
       uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
@@ -136,13 +134,20 @@ jobs:
   provenance:
     needs:
     - release
+    strategy:
+      matrix:
+        os:
+        - ubuntu-latest
+        - macos-latest
+        # - windows-latest
     permissions:
       actions: read # To read the workflow path.
       id-token: write # To sign the provenance.
       contents: write # To add assets to a release.
     uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
     with:
-      base64-subjects: "${{ needs.release.outputs.hash }}"
+      # base64-subjects: "${{ needs.release.outputs.hash }}"
+      base64-subjects: "${{ needs.release.outputs[format('hash-{0}', matrix.os)] }}"
       upload-assets: true # upload to a new release
 
   verification:
