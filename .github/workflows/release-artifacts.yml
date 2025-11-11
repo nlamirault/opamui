@@ -21,6 +21,7 @@ permissions:
 jobs:
   release:
     strategy:
+      fail-fast: false # Don't cancel other jobs if one fails
       matrix:
         os:
         - ubuntu-latest
@@ -33,7 +34,10 @@ jobs:
     name: Release for ${{ matrix.os }}
 
     outputs:
-      hash: ${{ steps.hash.outputs.hash }}
+      # hash: ${{ steps.hash.outputs.hash }}
+      hash-ubuntu-latest: ${{ steps.hash.outputs.hash-ubuntu-latest }}
+      hash-macos-latest: ${{ steps.hash.outputs.hash-macos-latest }}
+      # hash-windows-latest: ${{ steps.hash.outputs.hash-windows-latest }}
       binary-name: ${{ steps.hash.outputs.binary-name }}
       artifact-name: ${{ steps.hash.outputs.artifact-name }}
 
@@ -74,6 +78,7 @@ jobs:
         bin_name="${{ github.workspace }}/opamui-$TAG_NAME-$os-$arch"
         artifact_name="opamui-$TAG_NAME-$os-$arch"
         cp "$OPAM_DESTDIR/bin/opamui" $bin_name
+
         echo "BIN_NAME=$bin_name" >> $GITHUB_ENV
 
         # Cross-platform hash calculation
@@ -83,15 +88,7 @@ jobs:
           sha256_hash=$(sha256sum $bin_name | awk '{print $1}')
         fi
 
-        # Create subject in format: name:sha256:hash and base64 encode
-        # subject="${artifact_name}:${sha256_hash}"
-        # if [[ "${{ runner.os }}" == "macOS" ]]; then
-        #   hash=$(echo -n "$subject" | base64)
-        # else
-        #   hash=$(echo -n "$subject" | base64 -w0)
-        # fi
-
-        echo "hash-${{ matrix.os }}=$sha256_hash" >> "$GITHUB_OUTPUT"
+        echo "hash-${{ matrix.os }}=$sha256_hash" >> "${GITHUB_OUTPUT}"
         # echo "hash=$hash" >> "$GITHUB_OUTPUT"
         echo "binary-name=$bin_name" >> "$GITHUB_OUTPUT"
         echo "artifact-name=$artifact_name" >> "$GITHUB_OUTPUT"
