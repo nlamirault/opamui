@@ -172,9 +172,16 @@ jobs:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         set -euo pipefail
-        echo "Download artifacts from ${GITHUB_REPOSITORY} for ${GITHUB_REF_NAME}"
-        gh -R "${GITHUB_REPOSITORY}" release download "${GITHUB_REF_NAME}" -p "${{ needs.release.outputs.artifact-name }}*"
-        gh -R "${GITHUB_REPOSITORY}" release download "${GITHUB_REF_NAME}" -p "${{ needs.release.outputs.artifact-name }}.intoto.jsonl"
+
+        if [ -n "${{ github.event.inputs.tag }}" ]; then
+          release_name="${{ github.event.inputs.tag }}"
+        else
+          release_name="${{ github.ref_name }}"
+        fi
+
+        echo "Download artifacts from ${GITHUB_REPOSITORY} for ${release_name}"
+        gh -R "${GITHUB_REPOSITORY}" release download "${release_name}" -p "${{ needs.release.outputs.artifact-name }}*"
+        gh -R "${GITHUB_REPOSITORY}" release download "${release_name}" -p "${{ needs.release.outputs.artifact-name }}.intoto.jsonl"
         ls
 
     - name: ✅ Verify binary
