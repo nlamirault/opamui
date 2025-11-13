@@ -153,7 +153,7 @@ jobs:
       base64-subjects: "${{ needs.release.outputs[format('hash-{0}', matrix.os)] }}"
       provenance-name: ${{ matrix.os }}-provenance.intoto.jsonl
       upload-assets: true
-      upload-tag-name: ${{ needs.relase.outputs.tag-name }}
+      upload-tag-name: ${{ needs.release.outputs.tag-name }}
 
   # image-provenance:
   #   needs:
@@ -204,14 +204,14 @@ jobs:
 
     #     # os=$(echo "${{ runner.os }}" | tr '[:upper:]' '[:lower:]')
     #     # arch=$(uname -m)
-    #     # bin_name="${{ github.workspace }}/opamui-${{ needs.relase.outputs.tag-name }}-$os-$arch"
-    #     # artifact_name="opamui-${{ needs.relase.outputs.tag-name }}-$os-$arch"
+    #     # bin_name="${{ github.workspace }}/opamui-${{ needs.release.outputs.tag-name }}-$os-$arch"
+    #     # artifact_name="opamui-${{ needs.release.outputs.tag-name }}-$os-$arch"
 
-    #     bin_name="${{ github.workspace }}/opamui-${{ needs.relase.outputs.tag-name }}"
+    #     bin_name="${{ github.workspace }}/opamui-${{ needs.release.outputs.tag-name }}"
 
     #     echo "Download artifacts from ${GITHUB_REPOSITORY} for ${release_name}"
-    #     gh -R "${GITHUB_REPOSITORY}" release download "${{ needs.relase.outputs.tag-name }}" -p "${bin_name}*"
-    #     gh -R "${GITHUB_REPOSITORY}" release download "${{ needs.relase.outputs.tag-name }}" -p ".*-provenance.intoto.jsonl"
+    #     gh -R "${GITHUB_REPOSITORY}" release download "${{ needs.release.outputs.tag-name }}" -p "${bin_name}*"
+    #     gh -R "${GITHUB_REPOSITORY}" release download "${{ needs.release.outputs.tag-name }}" -p ".*-provenance.intoto.jsonl"
     #     ls -al
 
     # - name: ✅ Verify binary
@@ -223,21 +223,21 @@ jobs:
     #     slsa-verifier verify-artifact ${{ needs.release.outputs.artifact-name }} \
     #       --provenance-path ${{ matrix.os }}-provenance.intoto.jsonl \
     #       --source-uri "github.com/${GITHUB_REPOSITORY}" \
-    #       --source-tag "${{ needs.relase.outputs.tag-name }}"
+    #       --source-tag "${{ needs.release.outputs.tag-name }}"
 
     - name: ⬇️ Download artifacts
-      uses: actions/download-artifact@v5
-      with:
-        name: ${{ steps.hash.outputs.binary-name }}
+      uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+    # with:
+    #   name: ${{ need.release.outputs.binary-name }}
 
-    - name: ⬇️ Download provenance
-      uses: actions/download-artifact@v5
-      with:
-        name: ${{ matrix.os }}-provenance.intoto.jsonl
+    # - name: ⬇️ Download provenance
+    #   uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+    #   with:
+    #     name: ${{ matrix.os }}-provenance.intoto.jsonl
 
     - name: ✅ Verify artifact
       run: |
         slsa-verifier verify-artifact ${{ needs.release.outputs.artifact-name }} \
           --provenance-path ${{ matrix.os }}-provenance.intoto.jsonl \
           --source-uri github.com/${{ github.repository }} \
-          --source-tag "${{ needs.relase.outputs.tag-name }}"
+          --source-tag "${{ needs.release.outputs.tag-name }}"
