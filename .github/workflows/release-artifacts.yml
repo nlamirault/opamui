@@ -201,20 +201,14 @@ jobs:
       run: |
         set -euo pipefail
 
-        if [ -n "${{ github.event.inputs.tag }}" ]; then
-          release_name="${{ github.event.inputs.tag }}"
-        else
-          release_name="${{ github.ref_name }}"
-        fi
-
         os=$(echo "${{ runner.os }}" | tr '[:upper:]' '[:lower:]')
         arch=$(uname -m)
-        bin_name="${{ github.workspace }}/opamui-$TAG_NAME-$os-$arch"
-        artifact_name="opamui-$TAG_NAME-$os-$arch"
+        bin_name="${{ github.workspace }}/opamui-${{ needs.relase.outputs.tag-name }}-$os-$arch"
+        artifact_name="opamui-${{ needs.relase.outputs.tag-name }}-$os-$arch"
 
         echo "Download artifacts from ${GITHUB_REPOSITORY} for ${release_name}"
-        gh -R "${GITHUB_REPOSITORY}" release download "${release_name}" -p "${artifact_name}"
-        gh -R "${GITHUB_REPOSITORY}" release download "${release_name}" -p "${{ matrix.os }}-provenance.intoto.jsonl"
+        gh -R "${GITHUB_REPOSITORY}" release download "${{ needs.relase.outputs.tag-name }}" -p "${artifact_name}"
+        gh -R "${GITHUB_REPOSITORY}" release download "${{ needs.relase.outputs.tag-name }}" -p "${{ matrix.os }}-provenance.intoto.jsonl"
         ls
 
     - name: ✅ Verify binary
@@ -226,4 +220,4 @@ jobs:
         slsa-verifier verify-artifact ${{ needs.release.outputs.artifact-name }} \
           --provenance-path ${{ matrix.os }}-provenance.intoto.jsonl \
           --source-uri "github.com/${GITHUB_REPOSITORY}" \
-          --source-tag "${GITHUB_REF_NAME}"
+          --source-tag "${{ needs.relase.outputs.tag-name }}"
