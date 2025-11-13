@@ -178,16 +178,15 @@ jobs:
     - release
     - artifact-provenance
 
-    strategy:
-      fail-fast: false # Don't cancel other jobs if one fails
-      matrix:
-        os:
-        - ubuntu-latest
-        - macos-latest
-        # - windows-latest
+    # strategy:
+    #   fail-fast: false # Don't cancel other jobs if one fails
+    #   matrix:
+    #     os:
+    #     - ubuntu-latest
+    #     - macos-latest
+    #     # - windows-latest
 
     runs-on: ubuntu-latest
-    # name: Verification
 
     steps:
     - name: 🛡️ Harden the runner (Audit all outbound calls)
@@ -205,15 +204,27 @@ jobs:
         set -euo pipefail
 
         echo "Download artifacts from ${{ github.repository }} for ${{ needs.release.outputs.tag-name }}"
-        gh -R "${{ github.repository }}" release download "${{ needs.release.outputs.tag-name }}" -p "${{ needs.release.outputs.artifact-name }}"
-        gh -R "${{ github.repository }}" release download "${{ needs.release.outputs.tag-name }}" -p "${{ matrix.os }}-provenance.intoto.jsonl"
+        gh -R "${{ github.repository }}" release download "${{ needs.release.outputs.tag-name }}" -p "opamui-${{ needs.release.outputs.tag-name }}-*"
+        gh -R "${{ github.repository }}" release download "${{ needs.release.outputs.tag-name }}" -p "*-provenance.intoto.jsonl"
         ls -al
 
     - name: ✅ Verify artifact
       run: |
         set -euo pipefail
 
-        slsa-verifier verify-artifact ${{ needs.release.outputs.artifact-name }} \
-          --provenance-path ${{ matrix.os }}-provenance.intoto.jsonl \
-          --source-uri github.com/${{ github.repository }} \
-          --source-tag "${{ needs.release.outputs.tag-name }}"
+        for artifact in $(ls opamui-${{ needs.release.outputs.tag-name }}-*); do
+
+          if [[ "$artifact" == *"linux"* ]]; then
+            provenance="ubuntu-latest-provenance.intoto.jsonl"
+          elif [[ "$artifact" == *"macos"* ]]; then
+            provenance="macos-latest-provenance.intoto.jsonl"
+          else
+            echo "Erreur : Invalid artifact: $artifact"
+            exit 1
+          fi
+
+          slsa-verifier verify-artifact $artifact \
+            --provenance-path $provenance \
+            --source-uri github.com/${{ github.repository }} \
+            --source-tag "${{ needs.release.outputs.tag-name }}"
+        done
