@@ -204,9 +204,9 @@ jobs:
       run: |
         set -euo pipefail
 
-        echo "Download artifacts from ${GITHUB_REPOSITORY} for ${release_name}"
-        gh -R "${GITHUB_REPOSITORY}" release download "${{ needs.release.outputs.tag-name }}" -p "${{ needs.release.outputs.artifact-name }}"
-        gh -R "${GITHUB_REPOSITORY}" release download "${{ needs.release.outputs.tag-name }}" -p "${{ matrix.os }}-provenance.intoto.jsonl"
+        echo "Download artifacts from ${{ github.repository }} for ${{ needs.release.outputs.tag-name }}"
+        gh -R "${{ github.repository }}" release download "${{ needs.release.outputs.tag-name }}" -p "${{ needs.release.outputs.artifact-name }}"
+        gh -R "${{ github.repository }}" release download "${{ needs.release.outputs.tag-name }}" -p "${{ matrix.os }}-provenance.intoto.jsonl"
         ls -al
 
     - name: ✅ Verify artifact
