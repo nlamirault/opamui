@@ -137,6 +137,7 @@ jobs:
     needs:
     - release
     strategy:
+      fail-fast: false # Don't cancel other jobs if one fails
       matrix:
         os:
         - ubuntu-latest
@@ -178,6 +179,7 @@ jobs:
     - artifact-provenance
 
     strategy:
+      fail-fast: false # Don't cancel other jobs if one fails
       matrix:
         os:
         - ubuntu-latest
@@ -196,47 +198,21 @@ jobs:
     - name: 🎉 Install the SLSA verifier
       uses: slsa-framework/slsa-verifier/actions/installer@ea584f4502babc6f60d9bc799dbbb13c1caa9ee6 # v2.7.1
 
-    # - name: ⬇️ Download assets
-    #   env:
-    #     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   run: |
-    #     set -euo pipefail
+    - name: ⬇️ Download assets
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        set -euo pipefail
 
-    #     # os=$(echo "${{ runner.os }}" | tr '[:upper:]' '[:lower:]')
-    #     # arch=$(uname -m)
-    #     # bin_name="${{ github.workspace }}/opamui-${{ needs.release.outputs.tag-name }}-$os-$arch"
-    #     # artifact_name="opamui-${{ needs.release.outputs.tag-name }}-$os-$arch"
-
-    #     bin_name="${{ github.workspace }}/opamui-${{ needs.release.outputs.tag-name }}"
-
-    #     echo "Download artifacts from ${GITHUB_REPOSITORY} for ${release_name}"
-    #     gh -R "${GITHUB_REPOSITORY}" release download "${{ needs.release.outputs.tag-name }}" -p "${bin_name}*"
-    #     gh -R "${GITHUB_REPOSITORY}" release download "${{ needs.release.outputs.tag-name }}" -p ".*-provenance.intoto.jsonl"
-    #     ls -al
-
-    # - name: ✅ Verify binary
-    #   env:
-    #     CHECKSUMS: ${{ needs.release.outputs.hash }}
-    #   run: |
-    #     set -euo pipefail
-
-    #     slsa-verifier verify-artifact ${{ needs.release.outputs.artifact-name }} \
-    #       --provenance-path ${{ matrix.os }}-provenance.intoto.jsonl \
-    #       --source-uri "github.com/${GITHUB_REPOSITORY}" \
-    #       --source-tag "${{ needs.release.outputs.tag-name }}"
-
-    - name: ⬇️ Download artifacts
-      uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
-    # with:
-    #   name: ${{ need.release.outputs.binary-name }}
-
-    # - name: ⬇️ Download provenance
-    #   uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
-    #   with:
-    #     name: ${{ matrix.os }}-provenance.intoto.jsonl
+        echo "Download artifacts from ${GITHUB_REPOSITORY} for ${release_name}"
+        gh -R "${GITHUB_REPOSITORY}" release download "${{ needs.release.outputs.tag-name }}" -p "${{ needs.release.outputs.artifact-name }}"
+        gh -R "${GITHUB_REPOSITORY}" release download "${{ needs.release.outputs.tag-name }}" -p "${{ matrix.os }}-provenance.intoto.jsonl"
+        ls -al
 
     - name: ✅ Verify artifact
       run: |
+        set -euo pipefail
+
         slsa-verifier verify-artifact ${{ needs.release.outputs.artifact-name }} \
           --provenance-path ${{ matrix.os }}-provenance.intoto.jsonl \
           --source-uri github.com/${{ github.repository }} \
