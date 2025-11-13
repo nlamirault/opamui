@@ -133,7 +133,7 @@ jobs:
           ${{ steps.hash.outputs.binary-name }}
           ${{ steps.hash.outputs.artifact-name }}.spdx.json
 
-  provenance:
+  artifact-provenance:
     needs:
     - release
     strategy:
@@ -144,24 +144,47 @@ jobs:
         # - windows-latest
     permissions:
       actions: read # To read the workflow path.
-      id-token: write # To sign the provenance.
       contents: write # To add assets to a release.
+      id-token: write # To sign the provenance.
+      packages: write # Required for publishing provenance.
 
     uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
     with:
-      # base64-subjects: "${{ needs.release.outputs.hash }}"
       base64-subjects: "${{ needs.release.outputs[format('hash-{0}', matrix.os)] }}"
-      upload-assets: true # upload to a new release
+      provenance-name: ${{ matrix.os }}-provenance.intoto.jsonl
+      upload-assets: true
       upload-tag-name: ${{ needs.relase.outputs.tag-name }}
+
+  # image-provenance:
+  #   needs:
+  #   - release
+  #   permissions:
+  #     actions: read # To read the workflow path.
+  #     contents: write # To add assets to a release.
+  #     id-token: write # To sign the provenance.
+  #     packages: write # Required for publishing provenance.
+
+  #   uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.1.0
+  #   with:
+  #     digest: "${{ needs.publish-oci.outputs.digest }}"
+  #     image: "${{ needs.publish-oci.outputs.image }}"
+  #     registry-username: ${{ github.actor }}
+  #   secrets:
+  #     registry-password: ${{ secrets.GITHUB_TOKEN }}
 
   verification:
     needs:
     - release
-    - provenance
-    runs-on: ubuntu-latest
-    permissions: read-all
+    - artifact-provenance
+    strategy:
+      matrix:
+        os:
+        - ubuntu-latest
+        - macos-latest
+        # - windows-latest
 
-    name: Verification
+    runs-on: ${{ matrix.os }}
+    name: Verification for ${{ matrix.os }}
 
     steps:
     - name: 🛡️ Harden the runner (Audit all outbound calls)
@@ -184,9 +207,14 @@ jobs:
           release_name="${{ github.ref_name }}"
         fi
 
+        os=$(echo "${{ runner.os }}" | tr '[:upper:]' '[:lower:]')
+        arch=$(uname -m)
+        bin_name="${{ github.workspace }}/opamui-$TAG_NAME-$os-$arch"
+        artifact_name="opamui-$TAG_NAME-$os-$arch"
+
         echo "Download artifacts from ${GITHUB_REPOSITORY} for ${release_name}"
-        gh -R "${GITHUB_REPOSITORY}" release download "${release_name}" -p "${{ needs.release.outputs.artifact-name }}*"
-        gh -R "${GITHUB_REPOSITORY}" release download "${release_name}" -p "multiple.intoto.jsonl"
+        gh -R "${GITHUB_REPOSITORY}" release download "${release_name}" -p "${artifact_name}"
+        gh -R "${GITHUB_REPOSITORY}" release download "${release_name}" -p "${{ matrix.os }}-provenance.intoto.jsonl"
         ls
 
     - name: ✅ Verify binary
@@ -196,6 +224,6 @@ jobs:
         set -euo pipefail
 
         slsa-verifier verify-artifact ${{ needs.release.outputs.artifact-name }} \
-          --provenance-path ${{ needs.release.outputs.artifact-name }}.intoto.jsonl \
+          --provenance-path ${{ matrix.os }}-provenance.intoto.jsonl \
           --source-uri "github.com/${GITHUB_REPOSITORY}" \
           --source-tag "${GITHUB_REF_NAME}"
