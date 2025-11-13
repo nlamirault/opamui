@@ -176,6 +176,7 @@ jobs:
     needs:
     - release
     - artifact-provenance
+
     strategy:
       matrix:
         os:
@@ -183,8 +184,8 @@ jobs:
         - macos-latest
         # - windows-latest
 
-    runs-on: ${{ matrix.os }}
-    name: Verification for ${{ matrix.os }}
+    runs-on: ubuntu-latest
+    # name: Verification
 
     steps:
     - name: 🛡️ Harden the runner (Audit all outbound calls)
@@ -195,29 +196,48 @@ jobs:
     - name: 🎉 Install the SLSA verifier
       uses: slsa-framework/slsa-verifier/actions/installer@ea584f4502babc6f60d9bc799dbbb13c1caa9ee6 # v2.7.1
 
-    - name: ⬇️ Download assets
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # - name: ⬇️ Download assets
+    #   env:
+    #     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   run: |
+    #     set -euo pipefail
+
+    #     # os=$(echo "${{ runner.os }}" | tr '[:upper:]' '[:lower:]')
+    #     # arch=$(uname -m)
+    #     # bin_name="${{ github.workspace }}/opamui-${{ needs.relase.outputs.tag-name }}-$os-$arch"
+    #     # artifact_name="opamui-${{ needs.relase.outputs.tag-name }}-$os-$arch"
+
+    #     bin_name="${{ github.workspace }}/opamui-${{ needs.relase.outputs.tag-name }}"
+
+    #     echo "Download artifacts from ${GITHUB_REPOSITORY} for ${release_name}"
+    #     gh -R "${GITHUB_REPOSITORY}" release download "${{ needs.relase.outputs.tag-name }}" -p "${bin_name}*"
+    #     gh -R "${GITHUB_REPOSITORY}" release download "${{ needs.relase.outputs.tag-name }}" -p ".*-provenance.intoto.jsonl"
+    #     ls -al
+
+    # - name: ✅ Verify binary
+    #   env:
+    #     CHECKSUMS: ${{ needs.release.outputs.hash }}
+    #   run: |
+    #     set -euo pipefail
+
+    #     slsa-verifier verify-artifact ${{ needs.release.outputs.artifact-name }} \
+    #       --provenance-path ${{ matrix.os }}-provenance.intoto.jsonl \
+    #       --source-uri "github.com/${GITHUB_REPOSITORY}" \
+    #       --source-tag "${{ needs.relase.outputs.tag-name }}"
+
+    - name: ⬇️ Download artifacts
+      uses: actions/download-artifact@v5
+      with:
+        name: ${{ steps.hash.outputs.binary-name }}
+
+    - name: ⬇️ Download provenance
+      uses: actions/download-artifact@v5
+      with:
+        name: ${{ matrix.os }}-provenance.intoto.jsonl
+
+    - name: ✅ Verify artifact
       run: |
-        set -euo pipefail
-
-        os=$(echo "${{ runner.os }}" | tr '[:upper:]' '[:lower:]')
-        arch=$(uname -m)
-        bin_name="${{ github.workspace }}/opamui-${{ needs.relase.outputs.tag-name }}-$os-$arch"
-        artifact_name="opamui-${{ needs.relase.outputs.tag-name }}-$os-$arch"
-
-        echo "Download artifacts from ${GITHUB_REPOSITORY} for ${release_name}"
-        gh -R "${GITHUB_REPOSITORY}" release download "${{ needs.relase.outputs.tag-name }}" -p "${artifact_name}"
-        gh -R "${GITHUB_REPOSITORY}" release download "${{ needs.relase.outputs.tag-name }}" -p "${{ matrix.os }}-provenance.intoto.jsonl"
-        ls
-
-    - name: ✅ Verify binary
-      env:
-        CHECKSUMS: ${{ needs.release.outputs.hash }}
-      run: |
-        set -euo pipefail
-
         slsa-verifier verify-artifact ${{ needs.release.outputs.artifact-name }} \
           --provenance-path ${{ matrix.os }}-provenance.intoto.jsonl \
-          --source-uri "github.com/${GITHUB_REPOSITORY}" \
+          --source-uri github.com/${{ github.repository }} \
           --source-tag "${{ needs.relase.outputs.tag-name }}"
