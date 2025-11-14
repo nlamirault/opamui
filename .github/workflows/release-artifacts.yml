@@ -214,9 +214,11 @@ jobs:
 
         for artifact in $(ls opamui-${{ needs.release.outputs.tag-name }}-*); do
 
-          if [[ "$artifact" == *"latest"* ]]; then
+          if [[ "$artifact" == *"latest"* ]] || [[ "$artifact" == *"spdx"* ]]; then
             continue
-          elif [[ "$artifact" == *"linux"* ]]; then
+          fi
+
+          if [[ "$artifact" == *"linux"* ]]; then
             provenance="ubuntu-latest-provenance.intoto.jsonl"
           elif [[ "$artifact" == *"macos"* ]]; then
             provenance="macos-latest-provenance.intoto.jsonl"
