@@ -76,7 +76,7 @@ jobs:
         ocaml-compiler: 5.2.x
 
     - name: ✅ Lint documentation
-      uses: ocaml/setup-ocaml/lint-doc@dec6499fef64fc5d7ed43d43a87251b7b1c306f5 # v3.4.8
+      uses: ocaml/setup-ocaml/lint-doc@e32b06a3e831ff2fbc6f08cf35be2085e3918014 # v3.6.1
 
   lint-fmt:
     runs-on: ubuntu-latest
